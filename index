@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚦 Ampel-Check: Schule und Recht</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #22c55e;
+    --green-bg: #052e16;
+    --green-surface: #0a3d1f;
+    --orange: #f59e0b;
+    --orange-bg: #451a03;
+    --orange-surface: #5c2a06;
+    --red: #ef4444;
+    --red-bg: #350a0a;
+    --red-surface: #4a1010;
+    --slate: #0f1729;
+    --slate-light: #1e293b;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--slate);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 4rem;
+    opacity: 0;
+    transform: translateX(60px);
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ===== TITLE SLIDE ===== */
+  .title-slide {
+    background: linear-gradient(135deg, var(--slate) 0%, #1a1a2e 100%);
+    text-align: center;
+  }
+
+  .title-slide .traffic-lights {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .title-slide .light {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    animation: pulse-light 2.5s ease-in-out infinite;
+  }
+
+  .title-slide .light:nth-child(1) { background: var(--red); animation-delay: 0s; }
+  .title-slide .light:nth-child(2) { background: var(--orange); animation-delay: 0.8s; }
+  .title-slide .light:nth-child(3) { background: var(--green); animation-delay: 1.6s; }
+
+  @keyframes pulse-light {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 30px currentColor; }
+  }
+
+  .title-slide h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 4rem;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+
+  .title-slide .subtitle {
+    font-size: 1.35rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    line-height: 1.6;
+    animation: fadeUp 0.8s ease 0.4s both;
+  }
+
+  .title-slide .legend {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: 3rem;
+    animation: fadeUp 0.8s ease 0.6s both;
+  }
+
+  .title-slide .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .legend-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== CASE SLIDES ===== */
+  .case-slide {
+    background: linear-gradient(160deg, var(--slate) 0%, #141c2e 100%);
+  }
+
+  .case-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .case-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1rem, 1.3vw, 1.6rem);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .case-badge {
+    background: var(--slate-light);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: clamp(0.8rem, 1.1vw, 1.2rem);
+    color: var(--text-muted);
+  }
+
+  .case-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 3.2vw, 4rem);
+    line-height: 1.45;
+    max-width: 80vw;
+    text-align: center;
+    color: var(--text);
+  }
+
+  .vote-prompt {
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    font-size: clamp(1rem, 1.4vw, 1.5rem);
+    animation: gentle-bounce 2s ease-in-out infinite;
+  }
+
+  .vote-prompt .cards {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .vote-prompt .mini-card {
+    width: 18px;
+    height: 26px;
+    border-radius: 3px;
+  }
+
+  @keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* ===== REVEAL SLIDES ===== */
+  .reveal-slide {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .reveal-slide.green { background: linear-gradient(160deg, var(--green-bg) 0%, var(--green-surface) 100%); }
+  .reveal-slide.orange { background: linear-gradient(160deg, var(--orange-bg) 0%, var(--orange-surface) 100%); }
+  .reveal-slide.red { background: linear-gradient(160deg, var(--red-bg) 0%, var(--red-surface) 100%); }
+
+  .reveal-content {
+    max-width: 80vw;
+    text-align: center;
+  }
+
+  .ampel-circle {
+    width: clamp(80px, 10vw, 130px);
+    height: clamp(80px, 10vw, 130px);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    animation: ampel-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .green .ampel-circle { background: var(--green); box-shadow: 0 0 60px rgba(34, 197, 94, 0.4); }
+  .orange .ampel-circle { background: var(--orange); box-shadow: 0 0 60px rgba(245, 158, 11, 0.4); }
+  .red .ampel-circle { background: var(--red); box-shadow: 0 0 60px rgba(239, 68, 68, 0.4); }
+
+  @keyframes ampel-pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .reveal-label {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 2.5vw, 3rem);
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.4s ease 0.15s both;
+  }
+
+  .green .reveal-label { color: var(--green); }
+  .orange .reveal-label { color: var(--orange); }
+  .red .reveal-label { color: var(--red); }
+
+  .reveal-text {
+    font-size: clamp(1.2rem, 2vw, 2.2rem);
+    line-height: 1.7;
+    color: rgba(241, 245, 249, 0.9);
+    animation: fadeUp 0.4s ease 0.3s both;
+  }
+
+  /* ===== END SLIDE ===== */
+  .end-slide {
+    background: linear-gradient(135deg, var(--slate) 0%, #1a1a2e 100%);
+    text-align: center;
+  }
+
+  .end-slide h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .end-slide p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  .end-slide .end-lights {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+
+  .end-slide .end-light {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  /* ===== NAV ===== */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: rgba(15, 23, 41, 0.85);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    z-index: 100;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--green), var(--orange), var(--red));
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  .nav-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .nav-btn {
+    background: var(--slate-light);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text);
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .nav-btn:hover {
+    background: rgba(148, 163, 184, 0.15);
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+
+  .nav-btn:active { transform: scale(0.97); }
+
+  .nav-btn.primary {
+    background: rgba(148, 163, 184, 0.15);
+    border-color: rgba(148, 163, 184, 0.3);
+  }
+
+  .key-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    margin-left: 0.4rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .slide { padding: 2rem 1.5rem; }
+    .title-slide h1 { font-size: 2.4rem; }
+    .case-text { font-size: 1.5rem; }
+    .reveal-text { font-size: 1.05rem; }
+    .ampel-circle { width: 72px; height: 72px; font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- SLIDE 0: Title -->
+<div class="slide title-slide active" data-index="0">
+  <div class="traffic-lights">
+    <div class="light" style="color:var(--red)"></div>
+    <div class="light" style="color:var(--orange)"></div>
+    <div class="light" style="color:var(--green)"></div>
+  </div>
+  <h1>Ampel-Check<br>Schule & Recht</h1>
+  <p class="subtitle">12 Fälle aus dem Schulalltag. Eure Einschätzung ist gefragt.</p>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Unbedenklich</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> Heikel</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> No-Go</div>
+  </div>
+</div>
+
+<div id="slides-container"></div>
+
+<!-- END SLIDE -->
+<div class="slide end-slide" data-index="25">
+  <h2>Vielen Dank!</h2>
+  <p>Im Zweifelsfall gilt: nachfragen, dokumentieren, Schulleitung einbeziehen.</p>
+  <div class="end-lights">
+    <div class="end-light" style="background:var(--green)"></div>
+    <div class="end-light" style="background:var(--orange)"></div>
+    <div class="end-light" style="background:var(--red)"></div>
+  </div>
+</div>
+
+<div class="nav-bar">
+  <div class="nav-info" id="navInfo">Folie 1 / 26</div>
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="prevSlide()">← Zurück <span class="key-hint">←</span></button>
+    <button class="nav-btn primary" onclick="nextSlide()">Weiter → <span class="key-hint">→</span></button>
+  </div>
+</div>
+
+<script>
+const cases = [
+  {
+    id: 1,
+    tag: "Datenschutz · E-Mail",
+    text: "Eine Lehrperson informiert die Eltern per Klassen-E-Mail über die bevorstehende Schulreise. Alle E-Mail-Adressen stehen sichtbar im «An»-Feld.",
+    color: "orange",
+    emoji: "🟠",
+    label: "Heikel – kommt drauf an",
+    explanation: "Die Info per E-Mail ist völlig okay – aber: Alle Adressen im «An»-Feld sichtbar ist ein Datenschutzproblem. E-Mail-Adressen sind Personendaten. Korrekt wäre BCC. Ein typischer Flüchtigkeitsfehler mit rechtlicher Relevanz."
+  },
+  {
+    id: 2,
+    tag: "Sorgfaltspflicht · Schulreise",
+    text: "Auf einer Schulreise klettert ein Schüler trotz klarem Verbot auf einen Felsen und verletzt sich. Die Lehrperson hatte die Regel vorgängig klar kommuniziert und dokumentiert.",
+    color: "green",
+    emoji: "🟢",
+    label: "Unbedenklich",
+    explanation: "Die Lehrperson ist ihrer Sorgfaltspflicht nachgekommen: klare Anweisung, altersgerechte Kommunikation, Dokumentation. Eine Lehrperson kann nicht jede Handlung jedes Schülers verhindern. Entscheidend ist, ob die Aufsicht angemessen organisiert war."
+  },
+  {
+    id: 3,
+    tag: "Social Media · Recht am Bild",
+    text: "Eine Lehrperson postet ein Foto der Klasse beim Sporttag auf ihrem privaten Instagram-Profil. Die Kinder sind gut erkennbar.",
+    color: "red",
+    emoji: "🔴",
+    label: "No-Go",
+    explanation: "Bilder von Schüler:innen auf privaten Social-Media-Kanälen der Lehrperson verletzen das Recht am eigenen Bild und den Datenschutz – unabhängig davon, ob eine generelle Fotoerlaubnis der Eltern vorliegt. Diese bezieht sich auf schulische Zwecke, nicht auf private Accounts."
+  },
+  {
+    id: 4,
+    tag: "Religionsfreiheit · Schwimmunterricht",
+    text: "Eine Schülerin (14) will aus religiösen Gründen nicht am gemischtgeschlechtlichen Schwimmunterricht teilnehmen. Die Eltern unterstützen den Wunsch und schreiben eine Dispensation.",
+    color: "orange",
+    emoji: "🟠",
+    label: "Heikel – kommt drauf an",
+    explanation: "Klassisch heikel. Das Bundesgericht hat entschieden, dass die Schulpflicht grundsätzlich vorgeht – aber Kompromisse möglich sein müssen (z.\u202FB. getrenntes Umziehen, Burkini). Eine pauschale Dispensation ist rechtlich kaum haltbar, ein starres Nein aber auch problematisch."
+  },
+  {
+    id: 5,
+    tag: "Privatsphäre · Handy",
+    text: "Ein Schüler wird seit Wochen gemobbt. Die Lehrperson vermutet beleidigende WhatsApp-Nachrichten und nimmt dem mutmasslichen Täter das Handy ab, um die Chats zu lesen.",
+    color: "red",
+    emoji: "🔴",
+    label: "No-Go",
+    explanation: "Das Lesen privater Nachrichten ist ein Eingriff in das Fernmeldegeheimnis und die Privatsphäre – auch bei Minderjährigen. Lehrpersonen haben dazu keine Befugnis. Das Handy vorübergehend einziehen ist denkbar, Chats lesen nicht. Bei Verdacht auf Straftaten: Schulleitung und ggf. Behörden einschalten."
+  },
+  {
+    id: 6,
+    tag: "Sorgfaltspflicht · Wandertag",
+    text: "Bei einem Wandertag beginnt es stark zu gewittern. Die Lehrperson kehrt spontan mit der Klasse in einer Bergbeiz ein und kürzt den Rückweg ab. Die Eltern werden erst nach Rückkehr informiert.",
+    color: "green",
+    emoji: "🟢",
+    label: "Unbedenklich",
+    explanation: "Genau richtig. Die Lehrperson hat eine situationsgerechte Entscheidung zum Schutz der Kinder getroffen. Die Sorgfaltspflicht verlangt, auf veränderte Bedingungen zu reagieren. Information im Nachgang ist völlig ausreichend."
+  },
+  {
+    id: 7,
+    tag: "Medikamente · Gesundheit",
+    text: "Eine Schülerin (12) klagt über starke Kopfschmerzen. Die Lehrperson gibt ihr eine Paracetamol-Tablette aus der eigenen Handtasche.",
+    color: "red",
+    emoji: "🔴",
+    label: "No-Go",
+    explanation: "Lehrpersonen dürfen grundsätzlich keine Medikamente abgeben – auch keine rezeptfreien. Das Risiko (Allergien, Unverträglichkeiten, Dosierung) liegt bei der Lehrperson. Korrekt: Eltern kontaktieren, bei Bedarf Schulärztin oder Notruf. Ausnahme nur bei dokumentierter Vereinbarung."
+  },
+  {
+    id: 8,
+    tag: "KI im Unterricht · Datenschutz",
+    text: "Eine Lehrperson setzt im Unterricht ChatGPT ein. Die Schüler:innen arbeiten an schulischen Laptops ohne persönliche Accounts – die Lehrperson hat einen Klassen-Login erstellt.",
+    color: "orange",
+    emoji: "🟠",
+    label: "Heikel – kommt drauf an",
+    explanation: "Grundsätzlich möglich, aber mit Stolpersteinen: Stimmen die Nutzungsbedingungen des Anbieters (Mindestalter)? Werden Daten der Schüler:innen verarbeitet? Gibt es eine kantonale Regelung oder Weisung der Schulbehörde? Ohne Klärung dieser Fragen bewegt man sich in einer Grauzone."
+  },
+  {
+    id: 9,
+    tag: "Datenschutz · Elternabend",
+    text: "Die Lehrperson fotografiert im Werkunterricht die fertigen Werkstücke (ohne Hände oder Gesichter) und zeigt sie am Elternabend als Slideshow.",
+    color: "green",
+    emoji: "🟢",
+    label: "Unbedenklich",
+    explanation: "Unbedenklich. Solange keine Personen erkennbar sind und die Bilder im schulischen Rahmen gezeigt werden, liegt kein datenschutzrechtliches Problem vor. Werkstücke allein sind keine Personendaten."
+  },
+  {
+    id: 10,
+    tag: "Schulpflicht · Klassenlager",
+    text: "Die Eltern eines Schülers verweigern die Teilnahme am einwöchigen Klassenlager. Begründung: Er habe noch nie auswärts übernachtet und sie hätten Bedenken.",
+    color: "orange",
+    emoji: "🟠",
+    label: "Heikel – kommt drauf an",
+    explanation: "Klassenlager gehören zum obligatorischen Unterricht – eine Verweigerung ist grundsätzlich nicht ohne Weiteres möglich. Aber: Die Schule muss die Situation ernst nehmen, das Gespräch suchen und allenfalls Lösungen anbieten. Zwang ohne Dialog wäre ebenso problematisch."
+  },
+  {
+    id: 11,
+    tag: "Aufsichtspflicht · Pausenplatz",
+    text: "Auf dem Pausenplatz geraten zwei Schüler in eine Schlägerei. Die Pausenaufsicht ist gerade am anderen Ende des Platzes. Sie eilt herbei, trennt die beiden und meldet den Vorfall.",
+    color: "green",
+    emoji: "🟢",
+    label: "Unbedenklich",
+    explanation: "Die Aufsichtspflicht verlangt nicht, überall gleichzeitig zu sein – sondern eine angemessene Organisation. Wenn die Aufsicht korrekt eingeteilt war und die Lehrperson rasch reagiert hat, ist die Sorgfaltspflicht erfüllt. Entscheidend ist das System, nicht die Allgegenwart."
+  },
+  {
+    id: 12,
+    tag: "Datenschutz · Noten",
+    text: "Eine Lehrperson schickt die Notenliste einer Prüfung mit Vor- und Nachnamen in die WhatsApp-Gruppe der Klasse, damit alle ihre Ergebnisse sehen können.",
+    color: "red",
+    emoji: "🔴",
+    label: "No-Go",
+    explanation: "Noten sind besonders schützenswerte Personendaten. Die Weitergabe an die ganze Klasse verletzt den Datenschutz massiv – erst recht über einen US-amerikanischen Messenger-Dienst. Noten werden individuell mitgeteilt."
+  }
+];
+
+// Generate slides
+const container = document.getElementById('slides-container');
+cases.forEach((c, i) => {
+  // Case slide
+  const caseSlide = document.createElement('div');
+  caseSlide.className = 'slide case-slide';
+  caseSlide.dataset.index = (i * 2) + 1;
+  caseSlide.innerHTML = `
+    <div class="case-header">
+      <span class="case-number">Fall ${c.id}</span>
+      <span class="case-badge">${c.tag}</span>
+    </div>
+    <div class="case-text">${c.text}</div>
+    <div class="vote-prompt">
+      <div class="cards">
+        <div class="mini-card" style="background:var(--green)"></div>
+        <div class="mini-card" style="background:var(--orange)"></div>
+        <div class="mini-card" style="background:var(--red)"></div>
+      </div>
+      Karten hoch!
+    </div>
+  `;
+  container.appendChild(caseSlide);
+
+  // Reveal slide
+  const revealSlide = document.createElement('div');
+  revealSlide.className = `slide reveal-slide ${c.color}`;
+  revealSlide.dataset.index = (i * 2) + 2;
+  revealSlide.innerHTML = `
+    <div class="reveal-content">
+      <div class="ampel-circle">${c.emoji}</div>
+      <div class="reveal-label">${c.label}</div>
+      <div class="reveal-text">${c.explanation}</div>
+    </div>
+  `;
+  container.appendChild(revealSlide);
+});
+
+// Navigation
+const allSlides = document.querySelectorAll('.slide');
+const totalSlides = allSlides.length;
+let currentSlide = 0;
+
+function updateSlide(direction) {
+  allSlides.forEach((slide, i) => {
+    slide.classList.remove('active', 'exit');
+    if (i < currentSlide) slide.classList.add('exit');
+  });
+  allSlides[currentSlide].classList.add('active');
+  
+  // Re-trigger animations on reveal slides
+  if (allSlides[currentSlide].classList.contains('reveal-slide')) {
+    const circle = allSlides[currentSlide].querySelector('.ampel-circle');
+    const label = allSlides[currentSlide].querySelector('.reveal-label');
+    const text = allSlides[currentSlide].querySelector('.reveal-text');
+    if (circle) { circle.style.animation = 'none'; circle.offsetHeight; circle.style.animation = ''; }
+    if (label) { label.style.animation = 'none'; label.offsetHeight; label.style.animation = ''; }
+    if (text) { text.style.animation = 'none'; text.offsetHeight; text.style.animation = ''; }
+  }
+
+  document.getElementById('navInfo').textContent = `Folie ${currentSlide + 1} / ${totalSlides}`;
+  document.getElementById('progressBar').style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+}
+
+function nextSlide() {
+  if (currentSlide < totalSlides - 1) {
+    currentSlide++;
+    updateSlide('next');
+  }
+}
+
+function prevSlide() {
+  if (currentSlide > 0) {
+    currentSlide--;
+    updateSlide('prev');
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+});
+
+// Touch support
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+});
+
+updateSlide('next');
+</script>
+</body>
+</html>
