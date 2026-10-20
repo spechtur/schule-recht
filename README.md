@@ -1,5 +1,7 @@
 # 🚦 Ampel-Check: Schule und Recht
 
+
+Test
 Eine interaktive Slide-Präsentation mit 12 Fällen aus dem Schulalltag, die rechtlich eingeordnet werden müssen. Konzipiert als aktivierende Abschlussübung für Weiterbildungen und Studiengänge im Bereich Schulrecht.
 
 ## Idee
